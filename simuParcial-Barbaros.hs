@@ -23,12 +23,12 @@ espadas :: Float -> Objeto
 espadas unPeso unBarbaro = aumentarFuerza unPeso unBarbaro
 
 otorgarHabilidad :: String -> Barbaro -> Barbaro
-otorgarHabilidad unaHabilidad unBarbaro = unBarbaro {
-    habilidades = unaHabilidad : habilidades unBarbaro
+otorgarHabilidad unElemento unBarbaro = unBarbaro {
+    habilidades = unElemento : habilidades unBarbaro
 }
 
 amuletosMisticos :: String -> Objeto
-amuletosMisticos unaHabilidad unBarbaro = otorgarHabilidad unaHabilidad unBarbaro
+amuletosMisticos unElemento unBarbaro = otorgarHabilidad unElemento unBarbaro
 
 desaparecerObjetos :: Barbaro -> Barbaro
 desaparecerObjetos unBarbaro = unBarbaro {
@@ -69,7 +69,7 @@ ejemploAventura :: Aventura
 ejemploAventura = [invasionDeSuciosDuendes, cremalleraDelTiempo, ritualDeFechorias]
 
 poseeHabilidad :: String -> Barbaro -> Bool
-poseeHabilidad unaHabilidad unBarbaro = any (== unaHabilidad) (habilidades unBarbaro)
+poseeHabilidad unElemento unBarbaro = any (== unElemento) (habilidades unBarbaro)
 
 invasionDeSuciosDuendes :: Evento
 invasionDeSuciosDuendes unBarbaro = poseeHabilidad "escribirPoesiaAtroz" unBarbaro
@@ -104,14 +104,14 @@ esVocal unaLetra = elem unaLetra "aeiouAEIOU"
 -- elem devuelve True o False si el char pertenece a la lista de vocales
 
 vocalesMayor3 :: String -> Bool
-vocalesMayor3 unaHabilidad = (length . filter esVocal) unaHabilidad > 3
+vocalesMayor3 unElemento = (length . filter esVocal) unElemento > 3
 -- filter devuelve una lista con los elementos que son vocales
 
 comienzaConMayus :: String -> Bool
-comienzaConMayus unaHabilidad = head unaHabilidad == toUpper (head unaHabilidad)
+comienzaConMayus unElemento = head unElemento == toUpper (head unElemento)
 
 cumplenCondicion :: String -> Bool
-cumplenCondicion unaHabilidad = vocalesMayor3 unaHabilidad && comienzaConMayus unaHabilidad
+cumplenCondicion unElemento = vocalesMayor3 unElemento && comienzaConMayus unElemento
 
 caligrafiaPerfecta :: Barbaro -> Bool
 caligrafiaPerfecta unBarbaro = all cumplenCondicion (habilidades unBarbaro)
@@ -137,14 +137,37 @@ sobrevivientes unaAventura grupoDeBarbaros = filter (pasaAventura unaAventura) g
 
 
 repetido :: [String] -> String -> Bool
-repetido habilidadesBarbaras unaHabilidad = (length . filter (== unaHabilidad)) habilidadesBarbaras > 1
--- filter devuelve una lista con los elems de habilidadesBarbaras que son iguales a unaHabilidad
+repetido listaBarbara unElemento = (length . filter (== unElemento)) listaBarbara > 1
+-- filter devuelve una lista con los elems de listaBarbara que son iguales a unElemento
 -- length cuenta la cantidad de elems de la lista de filter
--- si la cantidad de elems es mayor a 1, significa que se repitio
+-- si la cantidad de elems es mayor a 1, significa que se repitió
 
 sinRepetidos :: [String] -> [String]
-sinRepetidos habilidadesBarbaras = filter (not . repetido habilidadesBarbaras) habilidadesBarbaras
--- devuelvo una lista con los elems de habilidadesBarbaras que no se repiten
+sinRepetidos listaBarbara = filter (not . repetido listaBarbara) listaBarbara
+-- devuelvo una lista con los elems de listaBarbara que no se repiten
 
-descendientes :: Barbaro -> Barbaro
-descendientes unBarbaro =  foldr 
+compartirNombre :: Barbaro -> Barbaro
+compartirNombre unBarbaro = unBarbaro {
+    nombre = nombre unBarbaro ++ "*"
+}
+
+heredarHabilidades :: Barbaro -> Barbaro
+heredarHabilidades unBarbaro = unBarbaro {
+    habilidades = sinRepetidos (habilidades unBarbaro)
+}
+
+heredarObjetos :: Barbaro -> Barbaro
+heredarObjetos unBarbaro = unBarbaro {
+    objetos = objetos unBarbaro
+}
+
+usarObjetos :: Barbaro -> Barbaro
+usarObjetos unBarbaro = foldr ($) unBarbaro (objetos unBarbaro)
+-- foldr aplica cada objeto de la lista a unBarbaro
+-- $ es para componer funciones
+
+descendientes :: Barbaro -> [Barbaro]
+descendientes unBarbaro = iterate (usarObjetos . heredarObjetos . heredarHabilidades . compartirNombre)  unBarbaro
+
+-- sinRepetidos solo funciona sobre listas de Strings, asi que no se puede usar sobre la lista de objetos
+-- sobre el nom de unBarbaro tampoco puedo usar sinRepetidos xq no es una lista
