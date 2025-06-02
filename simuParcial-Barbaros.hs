@@ -1,3 +1,4 @@
+import Text.Show.Functions()
 import Data.Char (toUpper)
 
 type Objeto = Barbaro -> Barbaro
@@ -9,7 +10,7 @@ data Barbaro = UnBarbaro {
     fuerza :: Float,
     habilidades :: [String],
     objetos :: [Objeto]
-}
+} deriving (Show)
 
 dave :: Barbaro
 dave = UnBarbaro "Dave" 100 ["tejer","escribirPoesia"] [ardilla, varitasDefectuosas]
@@ -39,7 +40,7 @@ varitasDefectuosas :: Objeto
 varitasDefectuosas unBarbaro = desaparecerObjetos . otorgarHabilidad "hacerMagia" $ unBarbaro
 
 ardilla :: Objeto
-ardilla unBarbaro = unBarbaro
+ardilla unBarbaro = id unBarbaro
 
 cuerda :: Objeto -> Objeto -> Objeto
 cuerda unObjeto otroObjeto unBarbaro = unObjeto . otroObjeto $ unBarbaro
@@ -50,11 +51,10 @@ juntarHabilidades unBarbaro = (map toUpper . concat) (habilidades unBarbaro)
 -- concat junta todos los elems de una lista en una sola
 -- map toUpper transforma esa lista de un elem a una lista
 -- con el elem en mayus
+-- toUpper no transforma una lista, sino un char
 
 potenciarBarbaro :: Barbaro -> Barbaro
-potenciarBarbaro unBarbaro = unBarbaro {
-    habilidades = [juntarHabilidades unBarbaro]
-}
+potenciarBarbaro unBarbaro = desaparecerObjetos . otorgarHabilidad (juntarHabilidades unBarbaro) $ unBarbaro
 -- concat une la lst de habilidades en una sola
 -- map toUpper convierte cada letra de la habilidad en mayuscula
 
@@ -69,16 +69,16 @@ ejemploAventura :: Aventura
 ejemploAventura = [invasionDeSuciosDuendes, cremalleraDelTiempo, ritualDeFechorias]
 
 poseeHabilidad :: String -> Barbaro -> Bool
-poseeHabilidad unElemento unBarbaro = any (== unElemento) (habilidades unBarbaro)
+poseeHabilidad unElemento unBarbaro = elem unElemento (habilidades unBarbaro)
 
 invasionDeSuciosDuendes :: Evento
 invasionDeSuciosDuendes unBarbaro = poseeHabilidad "escribirPoesiaAtroz" unBarbaro
 
 tienePulgares :: String -> Bool
-tienePulgares nombreBarbaro = nombreBarbaro == "Faffy" || nombreBarbaro == "Astro"
+tienePulgares nombreBarbaro = elem nombreBarbaro ["Faffy", "Astro"]
 
 cremalleraDelTiempo :: Evento
-cremalleraDelTiempo unBarbaro = not(tienePulgares (nombre unBarbaro))
+cremalleraDelTiempo unBarbaro = not . tienePulgares $ (nombre unBarbaro)
 
 fuerzaMayor :: Float -> Barbaro -> Bool
 fuerzaMayor unNumero unBarbaro = fuerza unBarbaro > unNumero
@@ -92,7 +92,7 @@ poderDeGrito unBarbaro = length . juntarHabilidades $ unBarbaro
 -- con length cuento la cantidad de letras q tiene ese string
 
 cantidadObjetos :: Barbaro -> Int
-cantidadObjetos unBarbaro = length (objetos unBarbaro)
+cantidadObjetos unBarbaro = length . objetos $ unBarbaro
 -- cantidad de objetos q tiene el barbaro
 -- lenght cuenta la cantidad de elementos de una lista
 
@@ -108,7 +108,7 @@ vocalesMayor3 unElemento = (length . filter esVocal) unElemento > 3
 -- filter devuelve una lista con los elementos que son vocales
 
 comienzaConMayus :: String -> Bool
-comienzaConMayus unElemento = head unElemento == toUpper (head unElemento)
+comienzaConMayus unElemento = head unElemento == (toUpper.head) unElemento
 
 cumplenCondicion :: String -> Bool
 cumplenCondicion unElemento = vocalesMayor3 unElemento && comienzaConMayus unElemento
@@ -168,6 +168,5 @@ usarObjetos unBarbaro = foldr ($) unBarbaro (objetos unBarbaro)
 
 descendientes :: Barbaro -> [Barbaro]
 descendientes unBarbaro = iterate (usarObjetos . heredarObjetos . heredarHabilidades . compartirNombre)  unBarbaro
-
 -- sinRepetidos solo funciona sobre listas de Strings, asi que no se puede usar sobre la lista de objetos
 -- sobre el nom de unBarbaro tampoco puedo usar sinRepetidos xq no es una lista
